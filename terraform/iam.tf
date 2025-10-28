@@ -41,6 +41,49 @@ resource "aws_iam_role_policy_attachment" "cb_attach" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 
+resource "aws_iam_role_policy" "cb_logs" {
+  name = "${var.app_name}-codebuild-logs"
+  role = aws_iam_role.codebuild_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams"
+        ],
+        Resource : [
+          aws_cloudwatch_log_group.app.arn,
+          "${aws_cloudwatch_log_group.app.arn}:*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "cb_s3_attach" {
+  name = "${var.app_name}-codebuild-s3"
+  role = aws_iam_role.codebuild_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:PutObjectAcl"
+        ],
+        Resource = "${aws_s3_bucket.artifacts.arn}/*"
+      }
+    ]
+  })
+}
+
 # Terraform IAM Role for CodePipeline
 data "aws_iam_policy_document" "cp_assume" {
   statement {
@@ -63,8 +106,8 @@ resource "aws_iam_role_policy_attachment" "cp_full" {
 }
 
 resource "aws_iam_role_policy" "cp_use_connection" {
-  name       = "${var.app_name}-cp-use-connection"
-  role       = aws_iam_role.codepipeline_role.id
+  name = "${var.app_name}-cp-use-connection"
+  role = aws_iam_role.codepipeline_role.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -74,6 +117,66 @@ resource "aws_iam_role_policy" "cp_use_connection" {
           "codestar-connections:UseConnection"
         ]
         Resource = aws_codestarconnections_connection.github.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "cp_artifacts_s3" {
+  name = "${var.app_name}-cp-artifacts-s3"
+  role = aws_iam_role.codepipeline_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      # Bucket-level
+      {
+        Effect : "Allow",
+        Action : [
+          "s3:ListBucket",
+          "s3:GetBucketLocation",
+          "s3:GetBucketVersioning"
+        ],
+        Resource : aws_s3_bucket.artifacts.arn
+      },
+      {
+        Effect : "Allow",
+        Action : [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:GetObjectVersion",
+          "s3:GetObjectAcl"
+        ],
+        Resource : "${aws_s3_bucket.artifacts.arn}/*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "cp_codebuild" {
+  name = "${var.app_name}-cp-codebuild"
+  role = aws_iam_role.codepipeline_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      # Allow the pipeline to start project
+      {
+        Effect : "Allow",
+        Action : [
+          "codebuild:StartBuild"
+        ],
+        Resource : "${aws_codebuild_project.app_build.arn}"
+      },
+      {
+        Effect : "Allow",
+        Action : [
+          "codebuild:BatchGetProjects",
+          "codebuild:BatchGetBuilds",
+          "codebuild:ListBuildsForProject"
+        ],
+        Resource : "*"
       }
     ]
   })

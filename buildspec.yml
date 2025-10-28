@@ -1,5 +1,10 @@
 version: 0.2
 
+env:
+  shell: bash
+  variables:
+    APP_NAME: "web-app-aws-pipeline"
+
 phases:
   pre_build:
     commands:
@@ -7,7 +12,9 @@ phases:
       - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
       - REGION=${AWS_DEFAULT_REGION}
       - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ECR_REPO_URI}
-      - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
+      # POSIX-safe 7-char commit short SHA:
+      - IMAGE_TAG=$(printf '%.7s' "$CODEBUILD_RESOLVED_SOURCE_VERSION")
+      - echo "IMAGE_TAG=$IMAGE_TAG"
   build:
     commands:
       - docker build -t ${ECR_REPO_URI}:$IMAGE_TAG -t ${ECR_REPO_URI}:latest ./app
@@ -15,7 +22,7 @@ phases:
     commands:
       - docker push ${ECR_REPO_URI}:$IMAGE_TAG
       - docker push ${ECR_REPO_URI}:latest
-      - printf '[{"name":"%s","imageUri":"%s"}]' "${APP_NAME:-$APP_NAME_FALLBACK:-var.app_name}" "${ECR_REPO_URI}:$IMAGE_TAG" > imagedefinitions.json
+      - printf '[{"name":"%s","imageUri":"%s"}]' "${APP_NAME}" "${ECR_REPO_URI}:$IMAGE_TAG" > imagedefinitions.json
 artifacts:
   files:
     - imagedefinitions.json

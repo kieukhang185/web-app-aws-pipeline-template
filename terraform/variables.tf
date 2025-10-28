@@ -37,7 +37,7 @@ variable "container_port" {
 
 variable "github_repo" {
   type        = string
-  default     = "khangkieu185/web-app-aws-pipeline-template"
+  default     = "kieukhang185/web-app-aws-pipeline-template"
   description = "GitHub repository name"
 } # e.g. "org/repo"
 variable "github_branch" {

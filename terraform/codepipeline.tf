@@ -6,6 +6,7 @@ resource "aws_codestarconnections_connection" "github" {
 
 resource "aws_s3_bucket" "artifacts" {
   bucket = "${var.app_name}-cp-artifacts"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_versioning" "v" {

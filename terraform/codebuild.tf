@@ -18,12 +18,18 @@ resource "aws_codebuild_project" "app_build" {
       name  = "ECR_REPO_URI"
       value = aws_ecr_repository.app.repository_url
     }
+    environment_variable {
+      name  = "APP_NAME"
+      value = var.app_name
+    }
   }
 
   source { type = "CODEPIPELINE" }
   logs_config {
     cloudwatch_logs {
-      group_name = aws_cloudwatch_log_group.app.name
+      group_name  = aws_cloudwatch_log_group.app.name
+      stream_name = ""
+      status      = "ENABLED"
     }
   }
 
