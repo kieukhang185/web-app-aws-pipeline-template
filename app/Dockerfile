@@ -2,7 +2,7 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
-COPY . /app
+COPY ./src/ /app
 
 RUN pip install fastapi uvicorn
 
