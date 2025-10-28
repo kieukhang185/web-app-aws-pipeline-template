@@ -1,0 +1,21 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - aws --version
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - REGION=${AWS_DEFAULT_REGION}
+      - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ECR_REPO_URI}
+      - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
+  build:
+    commands:
+      - docker build -t ${ECR_REPO_URI}:$IMAGE_TAG -t ${ECR_REPO_URI}:latest ./app
+  post_build:
+    commands:
+      - docker push ${ECR_REPO_URI}:$IMAGE_TAG
+      - docker push ${ECR_REPO_URI}:latest
+      - printf '[{"name":"%s","imageUri":"%s"}]' "${APP_NAME:-$APP_NAME_FALLBACK:-var.app_name}" "${ECR_REPO_URI}:$IMAGE_TAG" > imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
