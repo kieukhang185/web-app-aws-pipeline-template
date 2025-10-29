@@ -11,3 +11,11 @@ terraform {
 provider "aws" {
   region = var.region
 }
+
+locals {
+  name = var.app_name
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}

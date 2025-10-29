@@ -5,7 +5,7 @@ resource "aws_codestarconnections_connection" "github" {
 }
 
 resource "aws_s3_bucket" "artifacts" {
-  bucket = "${var.app_name}-cp-artifacts"
+  bucket        = "${var.app_name}-cp-artifacts"
   force_destroy = true
 }
 
@@ -75,4 +75,7 @@ resource "aws_codepipeline" "this" {
       }
     }
   }
+  tags = merge(local.tags, {
+    Name = "${var.app_name}-codepipeline"
+  })
 }

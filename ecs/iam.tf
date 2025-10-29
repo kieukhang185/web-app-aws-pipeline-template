@@ -181,3 +181,52 @@ resource "aws_iam_role_policy" "cp_codebuild" {
     ]
   })
 }
+
+# Deployment IAM Role for CodePipeline to deploy to ECS
+resource "aws_iam_role_policy" "cp_codedeploy_ecs" {
+  name = "${var.app_name}-cp-codedeploy-ecs"
+  role = aws_iam_role.codepipeline_role.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetApplication",
+          "codedeploy:GetDeploymentConfig",
+          "codedeploy:GetDeploymentGroup",
+          "codedeploy:RegisterApplicationRevision",
+          "codedeploy:List*",
+          "codedeploy:Batch*"
+        ],
+        Resource = "*"
+      },
+      # ECS reads still needed if your pipeline also inspects/updates ECS
+      {
+        Effect: "Allow",
+        Action: [
+          "ecs:DescribeClusters",
+          "ecs:DescribeServices",
+          "ecs:DescribeTaskDefinition",
+          "ecs:DescribeTaskSets",
+          "ecs:ListClusters",
+          "ecs:ListServices",
+          "ecs:RegisterTaskDefinition",
+          "ecs:UpdateService"
+        ],
+        Resource: "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "iam:PassRole"
+        ],
+        Resource = [
+          aws_iam_role.ecs_task_execution.arn
+        ]
+      }
+    ]
+  })
+}

@@ -1,12 +1,4 @@
 # Terraform Networking Configuration
-locals {
-  name = var.app_name
-  tags = {
-    Project     = var.project_name
-    Environment = var.environment
-  }
-}
-
 data "aws_availability_zones" "available" {
   state = "available"
 }

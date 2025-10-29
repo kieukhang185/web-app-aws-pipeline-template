@@ -24,7 +24,11 @@ resource "aws_codebuild_project" "app_build" {
     }
   }
 
-  source { type = "CODEPIPELINE" }
+  source { 
+    type = "CODEPIPELINE"
+    buildspec = "ecs/buildspec.yml"
+  }
+
   logs_config {
     cloudwatch_logs {
       group_name  = aws_cloudwatch_log_group.app.name

@@ -1,4 +1,4 @@
-# Networking vars
+# Default variables for ECS infrastructure
 variable "region" {
   type        = string
   default     = "us-east-1"

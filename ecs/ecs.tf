@@ -5,6 +5,9 @@ resource "aws_cloudwatch_log_group" "app" {
 
 resource "aws_ecs_cluster" "this" {
   name = "${var.app_name}-cluster"
+  tags = merge(local.tags, {
+    Name = "${var.app_name}-cluster"
+  })
 }
 
 resource "aws_ecs_task_definition" "app" {
@@ -37,6 +40,9 @@ resource "aws_ecs_task_definition" "app" {
       }
     }
   ])
+  tags = merge(local.tags, {
+    Name = "${var.app_name}-task"
+  })
 }
 
 resource "aws_lb" "app" {
@@ -76,6 +82,9 @@ resource "aws_lb_listener" "app" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.app.arn
   }
+  tags = merge(local.tags, {
+    Name = "${var.app_name}-listener"
+  })
 }
 
 resource "aws_ecs_service" "app" {
@@ -98,4 +107,8 @@ resource "aws_ecs_service" "app" {
   }
 
   depends_on = [aws_lb_listener.app]
+
+  tags = merge(local.tags, {
+    Name = "${var.app_name}-service"
+  })
 }
